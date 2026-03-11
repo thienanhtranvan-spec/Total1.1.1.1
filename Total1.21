@@ -1,0 +1,188 @@
+-- TOTAL HUB v10.0 - Thiên Anh
+local Players,UIS,RS,Lighting,VirtualUser=game:GetService("Players"),game:GetService("UserInputService"),game:GetService("RunService"),game:GetService("Lighting"),game:GetService("VirtualUser")
+local TeleportSvc,HttpSvc=game:GetService("TeleportService"),game:GetService("HttpService")
+local Player=Players.LocalPlayer
+local Mouse=Player:GetMouse()
+local Camera=workspace.CurrentCamera
+local Conn={}
+local SpeedVal,FlySpeed,SpamMsg=16,60,"TotalHub"
+local S={InfJump=false,Noclip=false,SpeedLock=false,AntiFall=false,GodMode=false,AutoRespawn=false,Fly=false,ESP=false,Fullbright=false,InfStamina=false,AntiAFK=false,ChatSpam=false}
+local function C(k) if Conn[k] then Conn[k]:Disconnect() Conn[k]=nil end end
+local function GetH() local c=Player.Character return c and c:FindFirstChildOfClass("Humanoid") end
+local function GetR() local c=Player.Character return c and c:FindFirstChild("HumanoidRootPart") end
+
+local Rayfield=loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+local function N(t,m) Rayfield:Notify({Title=t,Content=m,Duration=3}) end
+
+local Win=Rayfield:CreateWindow({Name="✦ TOTAL HUB v10.0",LoadingTitle="Total Hub v10.0",LoadingSubtitle="by Thiên Anh",ConfigurationSaving={Enabled=true,FolderName="TotalHub",FileName="v10"},KeySystem=false})
+
+-- MOVEMENT
+local M=Win:CreateTab("🏃 Movement",4483362458)
+
+M:CreateToggle({Name="Inf Jump",CurrentValue=false,Flag="ij",Callback=function(v) S.InfJump=v end})
+UIS.JumpRequest:Connect(function() if S.InfJump then local h=GetH() if h then h:ChangeState(Enum.HumanoidStateType.Jumping) end end end)
+
+M:CreateSlider({Name="WalkSpeed",Range={16,500},Increment=1,CurrentValue=16,Flag="ws",Callback=function(v) SpeedVal=v local h=GetH() if h then h.WalkSpeed=v end end})
+M:CreateToggle({Name="Speed Lock",CurrentValue=false,Flag="sl",Callback=function(v) S.SpeedLock=v if v then Conn.Speed=RS.Heartbeat:Connect(function() local h=GetH() if h then h.WalkSpeed=SpeedVal end end) else C("Speed") end end})
+M:CreateSlider({Name="JumpPower",Range={50,1000},Increment=10,CurrentValue=50,Flag="jp",Callback=function(v) local h=GetH() if h then h.JumpPower=v end end})
+M:CreateSlider({Name="Gravity",Range={1,500},Increment=1,CurrentValue=196,Flag="gv",Callback=function(v) workspace.Gravity=v end})
+
+M:CreateToggle({Name="Noclip",CurrentValue=false,Flag="nc",Callback=function(v) S.Noclip=v if v then Conn.Noclip=RS.Stepped:Connect(function() local c=Player.Character if not c then return end for _,p in ipairs(c:GetDescendants()) do if p:IsA("BasePart") then p.CanCollide=false end end end) else C("Noclip") end end})
+M:CreateToggle({Name="Anti Fall",CurrentValue=false,Flag="af",Callback=function(v) S.AntiFall=v if v then Conn.AntiFall=RS.Heartbeat:Connect(function() local h=GetH() if h and h.FloorMaterial==Enum.Material.Air then h:ChangeState(Enum.HumanoidStateType.Jumping) end end) else C("AntiFall") end end})
+
+M:CreateButton({Name="🎯 Cấp TP Tool",Callback=function()
+    if Player.Backpack:FindFirstChild("TP Tool") then N("TP Tool","Đã có rồi!") return end
+    local t=Instance.new("Tool") t.Name="TP Tool" t.RequiresHandle=false t.Parent=Player.Backpack
+    t.Activated:Connect(function() local r=GetR() if r and Mouse.Target then r.CFrame=CFrame.new(Mouse.Hit.Position+Vector3.new(0,5,0)) end end)
+    N("✅ TP Tool","Đã thêm!")
+end})
+
+-- FLY
+local F=Win:CreateTab("✈️ Fly",4483362458)
+F:CreateSlider({Name="Fly Speed",Range={10,500},Increment=5,CurrentValue=60,Flag="fs",Callback=function(v) FlySpeed=v end})
+
+local flyBV,flyBG
+F:CreateToggle({Name="Fly (WASD·E↑·Q↓)",CurrentValue=false,Flag="fly",Callback=function(v)
+    S.Fly=v local r=GetR() local h=GetH() if not r or not h then return end
+    if v then
+        h.PlatformStand=true
+        flyBV=Instance.new("BodyVelocity") flyBV.MaxForce=Vector3.new(1e5,1e5,1e5) flyBV.Velocity=Vector3.zero flyBV.Parent=r
+        flyBG=Instance.new("BodyGyro") flyBG.MaxTorque=Vector3.new(1e5,1e5,1e5) flyBG.D=100 flyBG.Parent=r
+        Conn.Fly=RS.Heartbeat:Connect(function()
+            if not S.Fly then return end
+            local d=Vector3.zero
+            if UIS:IsKeyDown(Enum.KeyCode.W) then d=d+Camera.CFrame.LookVector end
+            if UIS:IsKeyDown(Enum.KeyCode.S) then d=d-Camera.CFrame.LookVector end
+            if UIS:IsKeyDown(Enum.KeyCode.A) then d=d-Camera.CFrame.RightVector end
+            if UIS:IsKeyDown(Enum.KeyCode.D) then d=d+Camera.CFrame.RightVector end
+            if UIS:IsKeyDown(Enum.KeyCode.E) then d=d+Vector3.new(0,1,0) end
+            if UIS:IsKeyDown(Enum.KeyCode.Q) then d=d-Vector3.new(0,1,0) end
+            flyBV.Velocity=d*FlySpeed flyBG.CFrame=Camera.CFrame
+        end)
+    else
+        C("Fly")
+        if flyBV then flyBV:Destroy() flyBV=nil end
+        if flyBG then flyBG:Destroy() flyBG=nil end
+        local hh=GetH() if hh then hh.PlatformStand=false end
+    end
+end})
+
+-- PLAYER
+local P=Win:CreateTab("👤 Player",4483362458)
+P:CreateToggle({Name="God Mode",CurrentValue=false,Flag="gm",Callback=function(v) S.GodMode=v if v then Conn.God=RS.Heartbeat:Connect(function() local h=GetH() if h then h.Health=h.MaxHealth end end) else C("God") end end})
+P:CreateSlider({Name="Max Health",Range={100,100000},Increment=100,CurrentValue=100,Flag="mh",Callback=function(v) local h=GetH() if h then h.MaxHealth=v h.Health=v end end})
+P:CreateToggle({Name="Auto Respawn",CurrentValue=false,Flag="ar",Callback=function(v) S.AutoRespawn=v if v then Conn.AR=RS.Heartbeat:Connect(function() local h=GetH() if h and h.Health<=0 then task.delay(0.5,function() Player:LoadCharacter() end) end end) else C("AR") end end})
+P:CreateToggle({Name="Invisible (local)",CurrentValue=false,Flag="inv",Callback=function(v) local c=Player.Character if not c then return end for _,p in ipairs(c:GetDescendants()) do if p:IsA("BasePart") then p.LocalTransparencyModifier=v and 1 or 0 end end end})
+P:CreateSlider({Name="Char Scale",Range={1,10},Increment=1,CurrentValue=1,Flag="cs",Callback=function(v) local h=GetH() if not h then return end for _,n in ipairs({"BodyDepthScale","BodyHeightScale","BodyWidthScale","HeadScale"}) do local s=h:FindFirstChild(n) if s then s.Value=v end end end})
+P:CreateButton({Name="💀 Reset",Callback=function() local h=GetH() if h then h.Health=0 end end})
+
+-- VISUAL
+local V=Win:CreateTab("👁️ Visual",4483362458)
+
+local ESPFolder=Instance.new("Folder") ESPFolder.Name="ESP" ESPFolder.Parent=workspace
+local function MakeESP(p)
+    if p==Player then return end
+    local function Build()
+        local c=p.Character if not c then return end
+        local r=c:FindFirstChild("HumanoidRootPart") if not r then return end
+        local old=ESPFolder:FindFirstChild("ESP_"..p.Name) if old then old:Destroy() end
+        C("ESPHp_"..p.Name)
+        local bb=Instance.new("BillboardGui") bb.Name="ESP_"..p.Name bb.Adornee=r bb.AlwaysOnTop=true bb.Size=UDim2.new(0,100,0,40) bb.StudsOffset=Vector3.new(0,3,0) bb.Parent=ESPFolder
+        local lbl=Instance.new("TextLabel",bb) lbl.BackgroundTransparency=1 lbl.Size=UDim2.new(1,0,0.6,0) lbl.TextColor3=Color3.fromRGB(255,50,50) lbl.TextStrokeTransparency=0 lbl.Font=Enum.Font.GothamBold lbl.TextScaled=true lbl.Text=p.Name
+        local bg=Instance.new("Frame",bb) bg.BackgroundColor3=Color3.fromRGB(30,30,30) bg.Size=UDim2.new(1,0,0.25,0) bg.Position=UDim2.new(0,0,0.72,0) bg.BorderSizePixel=0
+        local bar=Instance.new("Frame",bg) bar.BackgroundColor3=Color3.fromRGB(80,255,80) bar.Size=UDim2.new(1,0,1,0) bar.BorderSizePixel=0
+        Conn["ESPHp_"..p.Name]=RS.Heartbeat:Connect(function()
+            local hh=c:FindFirstChildOfClass("Humanoid")
+            if hh and bar.Parent then bar.Size=UDim2.new(math.clamp(hh.Health/math.max(hh.MaxHealth,1),0,1),0,1,0) end
+        end)
+    end
+    p.CharacterAdded:Connect(Build) Build()
+end
+
+V:CreateToggle({Name="ESP + HP Bar",CurrentValue=false,Flag="esp",Callback=function(v)
+    S.ESP=v
+    if v then
+        for _,p in ipairs(Players:GetPlayers()) do MakeESP(p) end
+        Conn.ESPAdd=Players.PlayerAdded:Connect(MakeESP)
+        Conn.ESPRem=Players.PlayerRemoving:Connect(function(p) C("ESPHp_"..p.Name) local b=ESPFolder:FindFirstChild("ESP_"..p.Name) if b then b:Destroy() end end)
+    else
+        for _,p in ipairs(Players:GetPlayers()) do C("ESPHp_"..p.Name) end
+        ESPFolder:ClearAllChildren() C("ESPAdd") C("ESPRem")
+    end
+end})
+
+local LDef={Brightness=Lighting.Brightness,ClockTime=Lighting.ClockTime,FogEnd=Lighting.FogEnd,GlobalShadows=Lighting.GlobalShadows,Ambient=Lighting.Ambient}
+V:CreateToggle({Name="Fullbright",CurrentValue=false,Flag="fb",Callback=function(v)
+    if v then Lighting.Brightness=10 Lighting.ClockTime=14 Lighting.FogEnd=1e6 Lighting.GlobalShadows=false Lighting.Ambient=Color3.new(1,1,1)
+    else for k,val in pairs(LDef) do Lighting[k]=val end end
+end})
+
+V:CreateSlider({Name="FOV",Range={30,120},Increment=1,CurrentValue=70,Flag="fov",Callback=function(v) Camera.FieldOfView=v end})
+
+V:CreateToggle({Name="Chams",CurrentValue=false,Flag="ch",Callback=function(v)
+    if v then Conn.Chams=RS.Heartbeat:Connect(function()
+        for _,p in ipairs(Players:GetPlayers()) do if p~=Player and p.Character then
+            for _,pt in ipairs(p.Character:GetDescendants()) do
+                if pt:IsA("BasePart") and not pt:FindFirstChildOfClass("SelectionBox") then
+                    local sb=Instance.new("SelectionBox") sb.Adornee=pt sb.Color3=Color3.fromRGB(255,0,0) sb.LineThickness=0.03 sb.SurfaceTransparency=0.7 sb.SurfaceColor3=Color3.fromRGB(255,80,80) sb.Parent=pt
+                end
+            end
+        end end
+    end)
+    else C("Chams") for _,p in ipairs(Players:GetPlayers()) do if p.Character then for _,pt in ipairs(p.Character:GetDescendants()) do local sb=pt:FindFirstChildOfClass("SelectionBox") if sb then sb:Destroy() end end end end end
+end})
+
+-- TOOLS
+local T=Win:CreateTab("🔧 Tools",4483362458)
+
+T:CreateToggle({Name="Inf Stamina/Mana",CurrentValue=false,Flag="is",Callback=function(v)
+    S.InfStamina=v if v then Conn.Stam=RS.Heartbeat:Connect(function()
+        local c=Player.Character if not c then return end
+        for _,val in ipairs(c:GetDescendants()) do if val:IsA("NumberValue") and val.Value<10 then local n=val.Name:lower() if n:find("stamina") or n:find("energy") or n:find("mana") then val.Value=100 end end end
+    end) else C("Stam") end
+end})
+
+T:CreateToggle({Name="Anti AFK",CurrentValue=false,Flag="aafk",Callback=function(v)
+    S.AntiAFK=v if v then Conn.AFK=Player.Idled:Connect(function() VirtualUser:Button2Down(Vector2.zero,Camera.CFrame) task.wait(0.5) VirtualUser:Button2Up(Vector2.zero,Camera.CFrame) end) else C("AFK") end
+end})
+
+T:CreateInput({Name="Chat Spam Msg",PlaceholderText="Nhập tin nhắn...",RemoveTextAfterFocusLost=false,Flag="csm",Callback=function(v) if v~="" then SpamMsg=v end end})
+T:CreateToggle({Name="Chat Spam",CurrentValue=false,Flag="csp",Callback=function(v)
+    S.ChatSpam=v if v then task.spawn(function() while S.ChatSpam do pcall(function() local r=game:GetService("ReplicatedStorage"):FindFirstChild("DefaultChatSystemChatEvents") if r then r:FindFirstChild("SayMessageRequest"):FireServer(SpamMsg,"All") end end) task.wait(3) end end) end
+end})
+
+T:CreateButton({Name="🔄 Rejoin",Callback=function() TeleportSvc:Teleport(game.PlaceId,Player) end})
+
+T:CreateButton({Name="🌐 Server Hop",Callback=function()
+    local ok,res=pcall(function() return game:GetService("HttpService"):JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100")) end)
+    if ok and res and res.data then for _,sv in ipairs(res.data) do if sv.id~=game.JobId and sv.playing<sv.maxPlayers then TeleportSvc:TeleportToPlaceInstance(game.PlaceId,sv.id,Player) return end end end
+    N("Server Hop","Không tìm được server trống!")
+end})
+
+T:CreateButton({Name="📡 Copy RemoteEvents",Callback=function()
+    local list={} for _,v in ipairs(game:GetDescendants()) do if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then table.insert(list,v:GetFullName()) end end
+    setclipboard(table.concat(list,"\n")) N("📡 Remotes","Copied "..#list.." remotes!")
+end})
+
+T:CreateButton({Name="📋 Copy PlaceId & JobId",Callback=function()
+    setclipboard("PlaceId: "..game.PlaceId.."\nJobId: "..game.JobId) N("✅ Copied!","PlaceId & JobId đã copy!")
+end})
+
+T:CreateButton({Name="🔨 F3X Builder",Callback=function()
+    pcall(function() loadstring(game:GetObjects("rbxassetid://6695644299")[1].Source)() end)
+end})
+
+-- AUTO RESTORE SAU RESPAWN
+Player.CharacterAdded:Connect(function()
+    task.wait(1)
+    if S.SpeedLock then C("Speed") Conn.Speed=RS.Heartbeat:Connect(function() local h=GetH() if h then h.WalkSpeed=SpeedVal end end) end
+    if S.GodMode then C("God") Conn.God=RS.Heartbeat:Connect(function() local h=GetH() if h then h.Health=h.MaxHealth end end) end
+    if S.AntiFall then C("AntiFall") Conn.AntiFall=RS.Heartbeat:Connect(function() local h=GetH() if h and h.FloorMaterial==Enum.Material.Air then h:ChangeState(Enum.HumanoidStateType.Jumping) end end) end
+    if S.Noclip then C("Noclip") Conn.Noclip=RS.Stepped:Connect(function() local c=Player.Character if not c then return end for _,p in ipairs(c:GetDescendants()) do if p:IsA("BasePart") then p.CanCollide=false end end end) end
+    if S.InfStamina then C("Stam") Conn.Stam=RS.Heartbeat:Connect(function() local c=Player.Character if not c then return end for _,val in ipairs(c:GetDescendants()) do if val:IsA("NumberValue") and val.Value<10 then local n=val.Name:lower() if n:find("stamina") or n:find("energy") or n:find("mana") then val.Value=100 end end end end) end
+    if S.ESP then for _,p in ipairs(Players:GetPlayers()) do MakeESP(p) end end
+    if S.Fly then S.Fly=false end
+end)
+
+N("✦ Total Hub v10.0","Loaded! 5 tabs · God · Fly · ESP · Chams sẵn sàng.")
+print("✦ TOTAL HUB v10.0 loaded!")
