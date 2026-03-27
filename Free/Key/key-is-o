@@ -1,0 +1,625 @@
+local Players = game:GetService("Players")
+local Player = Players.LocalPlayer
+local UIS = game:GetService("UserInputService")
+local RS = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+
+local authenticated = false
+local KEY = "o"
+local espEnabled = false
+local language = "VN"
+local ESPFolder = Instance.new("Folder")
+ESPFolder.Name = "ESP_Far"
+ESPFolder.Parent = workspace
+
+local savedSpeed = 16
+local savedJump = 50
+local speedLock = false
+local jumpLock = false
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "ESP_System"
+ScreenGui.Parent = game:GetService("CoreGui")
+ScreenGui.ResetOnSpawn = false
+
+local LangFrame = Instance.new("Frame")
+LangFrame.Size = UDim2.new(0, 320, 0, 200)
+LangFrame.Position = UDim2.new(0.5, -160, 0.5, -100)
+LangFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 22)
+LangFrame.BackgroundTransparency = 0.05
+LangFrame.BorderSizePixel = 0
+LangFrame.ClipsDescendants = true
+LangFrame.Parent = ScreenGui
+
+local LangCorner = Instance.new("UICorner")
+LangCorner.CornerRadius = UDim.new(0, 20)
+LangCorner.Parent = LangFrame
+
+local LangGlow = Instance.new("UIStroke")
+LangGlow.Color = Color3.fromRGB(255, 80, 120)
+LangGlow.Thickness = 1.5
+LangGlow.Parent = LangFrame
+
+local LangTitle = Instance.new("TextLabel")
+LangTitle.Size = UDim2.new(1, 0, 0, 50)
+LangTitle.Position = UDim2.new(0, 0, 0, 25)
+LangTitle.BackgroundTransparency = 1
+LangTitle.Text = "🌍 SELECT LANGUAGE"
+LangTitle.TextColor3 = Color3.fromRGB(255, 100, 140)
+LangTitle.TextSize = 18
+LangTitle.Font = Enum.Font.GothamBold
+LangTitle.Parent = LangFrame
+
+local VNBtn = Instance.new("TextButton")
+VNBtn.Size = UDim2.new(0, 130, 0, 50)
+VNBtn.Position = UDim2.new(0.5, -140, 0, 100)
+VNBtn.BackgroundColor3 = Color3.fromRGB(255, 80, 120)
+VNBtn.Text = "🇻🇳 TIẾNG VIỆT"
+VNBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+VNBtn.TextSize = 15
+VNBtn.Font = Enum.Font.GothamBold
+VNBtn.Parent = LangFrame
+
+local VNCorner = Instance.new("UICorner")
+VNCorner.CornerRadius = UDim.new(0, 12)
+VNCorner.Parent = VNBtn
+
+local ENBtn = Instance.new("TextButton")
+ENBtn.Size = UDim2.new(0, 130, 0, 50)
+ENBtn.Position = UDim2.new(0.5, 10, 0, 100)
+ENBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
+ENBtn.Text = "🇬🇧 ENGLISH"
+ENBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ENBtn.TextSize = 15
+ENBtn.Font = Enum.Font.GothamBold
+ENBtn.Parent = LangFrame
+
+local ENCorner = Instance.new("UICorner")
+ENCorner.CornerRadius = UDim.new(0, 12)
+ENCorner.Parent = ENBtn
+
+local KeyFrame = Instance.new("Frame")
+KeyFrame.Size = UDim2.new(0, 320, 0, 220)
+KeyFrame.Position = UDim2.new(0.5, -160, 0.5, -110)
+KeyFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 22)
+KeyFrame.BackgroundTransparency = 0.05
+KeyFrame.BorderSizePixel = 0
+KeyFrame.ClipsDescendants = true
+KeyFrame.Parent = ScreenGui
+KeyFrame.Visible = false
+
+local KeyCorner = Instance.new("UICorner")
+KeyCorner.CornerRadius = UDim.new(0, 20)
+KeyCorner.Parent = KeyFrame
+
+local KeyGlow = Instance.new("UIStroke")
+KeyGlow.Color = Color3.fromRGB(255, 80, 120)
+KeyGlow.Thickness = 1.5
+KeyGlow.Parent = KeyFrame
+
+local KeyTitle = Instance.new("TextLabel")
+KeyTitle.Size = UDim2.new(1, 0, 0, 50)
+KeyTitle.Position = UDim2.new(0, 0, 0, 20)
+KeyTitle.BackgroundTransparency = 1
+KeyTitle.Text = "🔐 AUTHENTICATION"
+KeyTitle.TextColor3 = Color3.fromRGB(255, 100, 140)
+KeyTitle.TextSize = 20
+KeyTitle.Font = Enum.Font.GothamBold
+KeyTitle.Parent = KeyFrame
+
+local KeySub = Instance.new("TextLabel")
+KeySub.Size = UDim2.new(1, 0, 0, 25)
+KeySub.Position = UDim2.new(0, 0, 0, 65)
+KeySub.BackgroundTransparency = 1
+KeySub.Text = "ENTER KEY TO ACTIVATE"
+KeySub.TextColor3 = Color3.fromRGB(150, 150, 180)
+KeySub.TextSize = 11
+KeySub.Font = Enum.Font.Gotham
+KeySub.Parent = KeyFrame
+
+local KeyBox = Instance.new("TextBox")
+KeyBox.Size = UDim2.new(0, 240, 0, 40)
+KeyBox.Position = UDim2.new(0.5, -120, 0, 100)
+KeyBox.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+KeyBox.Text = ""
+KeyBox.PlaceholderText = "ENTER KEY..."
+KeyBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+KeyBox.PlaceholderColor3 = Color3.fromRGB(100, 100, 120)
+KeyBox.TextSize = 14
+KeyBox.Font = Enum.Font.Gotham
+KeyBox.Parent = KeyFrame
+
+local KeyBoxCorner = Instance.new("UICorner")
+KeyBoxCorner.CornerRadius = UDim.new(0, 10)
+KeyBoxCorner.Parent = KeyBox
+
+local SubmitBtn = Instance.new("TextButton")
+SubmitBtn.Size = UDim2.new(0, 240, 0, 40)
+SubmitBtn.Position = UDim2.new(0.5, -120, 0, 150)
+SubmitBtn.BackgroundColor3 = Color3.fromRGB(255, 80, 120)
+SubmitBtn.Text = "ACTIVATE"
+SubmitBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+SubmitBtn.TextSize = 14
+SubmitBtn.Font = Enum.Font.GothamBold
+SubmitBtn.Parent = KeyFrame
+
+local SubmitCorner = Instance.new("UICorner")
+SubmitCorner.CornerRadius = UDim.new(0, 10)
+SubmitCorner.Parent = SubmitBtn
+
+local ErrorMsg = Instance.new("TextLabel")
+ErrorMsg.Size = UDim2.new(1, 0, 0, 20)
+ErrorMsg.Position = UDim2.new(0, 0, 0, 195)
+ErrorMsg.BackgroundTransparency = 1
+ErrorMsg.Text = ""
+ErrorMsg.TextColor3 = Color3.fromRGB(255, 80, 80)
+ErrorMsg.TextSize = 10
+ErrorMsg.Font = Enum.Font.Gotham
+ErrorMsg.Visible = false
+ErrorMsg.Parent = KeyFrame
+
+local MenuFrame = Instance.new("Frame")
+MenuFrame.Size = UDim2.new(0, 200, 0, 280)
+MenuFrame.Position = UDim2.new(0, 20, 0, 100)
+MenuFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 22)
+MenuFrame.BackgroundTransparency = 0.05
+MenuFrame.BorderSizePixel = 0
+MenuFrame.ClipsDescendants = true
+MenuFrame.Parent = ScreenGui
+MenuFrame.Visible = false
+
+local MenuCorner = Instance.new("UICorner")
+MenuCorner.CornerRadius = UDim.new(0, 16)
+MenuCorner.Parent = MenuFrame
+
+local MenuGlow = Instance.new("UIStroke")
+MenuGlow.Color = Color3.fromRGB(255, 80, 120)
+MenuGlow.Thickness = 1.5
+MenuGlow.Parent = MenuFrame
+
+local TitleBar = Instance.new("Frame")
+TitleBar.Size = UDim2.new(1, 0, 0, 40)
+TitleBar.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+TitleBar.BackgroundTransparency = 0
+TitleBar.Parent = MenuFrame
+
+local TitleCorner = Instance.new("UICorner")
+TitleCorner.CornerRadius = UDim.new(0, 16)
+TitleCorner.Parent = TitleBar
+
+local TitleText = Instance.new("TextLabel")
+TitleText.Size = UDim2.new(1, -40, 1, 0)
+TitleText.Position = UDim2.new(0, 12, 0, 0)
+TitleText.BackgroundTransparency = 1
+TitleText.Text = "⚡ ESP SYSTEM"
+TitleText.TextColor3 = Color3.fromRGB(255, 100, 140)
+TitleText.TextSize = 14
+TitleText.TextXAlignment = Enum.TextXAlignment.Left
+TitleText.Font = Enum.Font.GothamBold
+TitleText.Parent = TitleBar
+
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 28, 0, 28)
+CloseBtn.Position = UDim2.new(1, -34, 0.5, -14)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
+CloseBtn.Text = "✕"
+CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.TextSize = 14
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.Parent = TitleBar
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 8)
+CloseCorner.Parent = CloseBtn
+
+local function addRoundedButton(parent, text, y, color, callback)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 170, 0, 38)
+    btn.Position = UDim2.new(0.5, -85, 0, y)
+    btn.BackgroundColor3 = color or Color3.fromRGB(35, 35, 50)
+    btn.Text = text
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.TextSize = 12
+    btn.Font = Enum.Font.GothamSemibold
+    btn.Parent = parent
+    
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 10)
+    btnCorner.Parent = btn
+    
+    btn.MouseButton1Click:Connect(callback)
+    return btn
+end
+
+local espBtn
+local speedBtn
+local jumpBtn
+
+local function updateLanguage()
+    if language == "VN" then
+        KeyTitle.Text = "🔐 XÁC THỰC"
+        KeySub.Text = "NHẬP KEY ĐỂ KÍCH HOẠT"
+        KeyBox.PlaceholderText = "NHẬP KEY..."
+        SubmitBtn.Text = "KÍCH HOẠT"
+        TitleText.Text = "⚡ HỆ THỐNG ESP"
+        if espBtn then espBtn.Text = espEnabled and "✅ TẮT ESP" or "👁️ BẬT ESP" end
+        if speedBtn then speedBtn.Text = speedLock and "✅ KHÓA SPEED" or "⚡ LƯU SPEED" end
+        if jumpBtn then jumpBtn.Text = jumpLock and "✅ KHÓA JUMP" or "🦶 LƯU JUMP" end
+    else
+        KeyTitle.Text = "🔐 AUTHENTICATION"
+        KeySub.Text = "ENTER KEY TO ACTIVATE"
+        KeyBox.PlaceholderText = "ENTER KEY..."
+        SubmitBtn.Text = "ACTIVATE"
+        TitleText.Text = "⚡ ESP SYSTEM"
+        if espBtn then espBtn.Text = espEnabled and "✅ DISABLE ESP" or "👁️ ENABLE ESP" end
+        if speedBtn then speedBtn.Text = speedLock and "✅ SPEED LOCKED" or "⚡ SAVE SPEED" end
+        if jumpBtn then jumpBtn.Text = jumpLock and "✅ JUMP LOCKED" or "🦶 SAVE JUMP" end
+    end
+end
+local function MakeFarESP(player)
+    if player == Player then return end
+    
+    local function createESP(character)
+        if not character then return end
+        local root = character:FindFirstChild("HumanoidRootPart")
+        if not root then return end
+        
+        local old = ESPFolder:FindFirstChild("ESP_" .. player.Name)
+        if old then old:Destroy() end
+        
+        local bb = Instance.new("BillboardGui")
+        bb.Name = "ESP_" .. player.Name
+        bb.Adornee = root
+        bb.AlwaysOnTop = true
+        bb.Size = UDim2.new(0, 140, 0, 48)
+        bb.StudsOffset = Vector3.new(0, 3, 0)
+        bb.MaxDistance = 9e9
+        bb.Parent = ESPFolder
+        
+        local nameLabel = Instance.new("TextLabel", bb)
+        nameLabel.BackgroundTransparency = 1
+        nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
+        nameLabel.Text = player.Name
+        nameLabel.TextColor3 = Color3.fromRGB(255, 100, 120)
+        nameLabel.TextStrokeTransparency = 0
+        nameLabel.TextScaled = true
+        nameLabel.Font = Enum.Font.GothamBold
+        
+        local hpBarBg = Instance.new("Frame", bb)
+        hpBarBg.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+        hpBarBg.Size = UDim2.new(0.85, 0, 0.22, 0)
+        hpBarBg.Position = UDim2.new(0.075, 0, 0.6, 0)
+        hpBarBg.BorderSizePixel = 0
+        
+        local hpBarCorner = Instance.new("UICorner")
+        hpBarCorner.CornerRadius = UDim.new(0, 3)
+        hpBarCorner.Parent = hpBarBg
+        
+        local hpBar = Instance.new("Frame", hpBarBg)
+        hpBar.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
+        hpBar.Size = UDim2.new(1, 0, 1, 0)
+        hpBar.BorderSizePixel = 0
+        
+        local hpFillCorner = Instance.new("UICorner")
+        hpFillCorner.CornerRadius = UDim.new(0, 3)
+        hpFillCorner.Parent = hpBar
+        
+        local hpConn
+        hpConn = RS.Heartbeat:Connect(function()
+            if not player.Character or not player.Character.Parent then
+                if hpConn then hpConn:Disconnect() end
+                return
+            end
+            local hum = player.Character:FindFirstChildOfClass("Humanoid")
+            if hum then
+                local percent = math.clamp(hum.Health / hum.MaxHealth, 0, 1)
+                hpBar.Size = UDim2.new(percent, 0, 1, 0)
+                if percent > 0.6 then
+                    hpBar.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
+                elseif percent > 0.3 then
+                    hpBar.BackgroundColor3 = Color3.fromRGB(255, 200, 0)
+                else
+                    hpBar.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+                end
+            end
+        end)
+    end
+    
+    if player.Character then
+        createESP(player.Character)
+    end
+    
+    player.CharacterAdded:Connect(function(char)
+        task.wait(0.5)
+        createESP(char)
+    end)
+end
+
+local function toggleESP()
+    espEnabled = not espEnabled
+    if espEnabled then
+        for _, p in pairs(Players:GetPlayers()) do
+            MakeFarESP(p)
+        end
+        Players.PlayerAdded:Connect(MakeFarESP)
+        if language == "VN" then
+            Player:Chat("[ESP] 👁️ ESP ĐÃ BẬT - XA VÔ TẬN")
+        else
+            Player:Chat("[ESP] 👁️ ESP ENABLED - INFINITE RANGE")
+        end
+    else
+        ESPFolder:ClearAllChildren()
+        if language == "VN" then
+            Player:Chat("[ESP] 👁️ ESP ĐÃ TẮT")
+        else
+            Player:Chat("[ESP] 👁️ ESP DISABLED")
+        end
+    end
+    if espBtn then
+        if language == "VN" then
+            espBtn.Text = espEnabled and "✅ TẮT ESP" or "👁️ BẬT ESP"
+        else
+            espBtn.Text = espEnabled and "✅ DISABLE ESP" or "👁️ ENABLE ESP"
+        end
+    end
+end
+
+local function saveSpeed()
+    local hum = Player.Character and Player.Character:FindFirstChildOfClass("Humanoid")
+    if hum then
+        savedSpeed = hum.WalkSpeed
+        speedLock = true
+        if language == "VN" then
+            Player:Chat("[ESP] 💾 ĐÃ LƯU SPEED: " .. savedSpeed)
+            speedBtn.Text = "✅ KHÓA SPEED"
+        else
+            Player:Chat("[ESP] 💾 SPEED SAVED: " .. savedSpeed)
+            speedBtn.Text = "✅ SPEED LOCKED"
+        end
+    else
+        if language == "VN" then
+            Player:Chat("[ESP] ❌ KHÔNG TÌM THẤY NHÂN VẬT")
+        else
+            Player:Chat("[ESP] ❌ CHARACTER NOT FOUND")
+        end
+    end
+end
+
+local function saveJump()
+    local hum = Player.Character and Player.Character:FindFirstChildOfClass("Humanoid")
+    if hum then
+        savedJump = hum.JumpPower
+        jumpLock = true
+        if language == "VN" then
+            Player:Chat("[ESP] 💾 ĐÃ LƯU JUMP: " .. savedJump)
+            jumpBtn.Text = "✅ KHÓA JUMP"
+        else
+            Player:Chat("[ESP] 💾 JUMP SAVED: " .. savedJump)
+            jumpBtn.Text = "✅ JUMP LOCKED"
+        end
+    else
+        if language == "VN" then
+            Player:Chat("[ESP] ❌ KHÔNG TÌM THẤY NHÂN VẬT")
+        else
+            Player:Chat("[ESP] ❌ CHARACTER NOT FOUND")
+        end
+    end
+end
+
+local function restoreStats()
+    local hum = Player.Character and Player.Character:FindFirstChildOfClass("Humanoid")
+    if hum then
+        if speedLock then
+            hum.WalkSpeed = savedSpeed
+            if language == "VN" then
+                Player:Chat("[ESP] 🔄 ĐÃ KHÔI PHỤC SPEED: " .. savedSpeed)
+            else
+                Player:Chat("[ESP] 🔄 SPEED RESTORED: " .. savedSpeed)
+            end
+        end
+        if jumpLock then
+            hum.JumpPower = savedJump
+            if language == "VN" then
+                Player:Chat("[ESP] 🔄 ĐÃ KHÔI PHỤC JUMP: " .. savedJump)
+            else
+                Player:Chat("[ESP] 🔄 JUMP RESTORED: " .. savedJump)
+            end
+        end
+    end
+end
+
+Player.CharacterAdded:Connect(function(char)
+    task.wait(1.5)
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if hum then
+        if speedLock then
+            hum.WalkSpeed = savedSpeed
+        end
+        if jumpLock then
+            hum.JumpPower = savedJump
+        end
+    end
+    if espEnabled then
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= Player then
+                MakeFarESP(p)
+            end
+        end
+    end
+end)
+
+local menuVisible = true
+local menuPos = UDim2.new(0, 20, 0, 100)
+
+local function toggleMenu()
+    menuVisible = not menuVisible
+    MenuFrame.Visible = menuVisible
+    if menuVisible then
+        MenuFrame.Position = menuPos
+    else
+        menuPos = MenuFrame.Position
+    end
+end
+
+espBtn = addRoundedButton(MenuFrame, espEnabled and "✅ TẮT ESP" or "👁️ BẬT ESP", 48, Color3.fromRGB(255, 80, 120), toggleESP)
+speedBtn = addRoundedButton(MenuFrame, speedLock and "✅ KHÓA SPEED" or "⚡ LƯU SPEED", 96, Color3.fromRGB(50, 50, 70), saveSpeed)
+jumpBtn = addRoundedButton(MenuFrame, jumpLock and "✅ KHÓA JUMP" or "🦶 LƯU JUMP", 144, Color3.fromRGB(50, 50, 70), saveJump)
+addRoundedButton(MenuFrame, "🔄 KHÔI PHỤC", 192, Color3.fromRGB(50, 50, 70), restoreStats)
+addRoundedButton(MenuFrame, "🔒 ĐÓNG MENU", 240, Color3.fromRGB(80, 60, 80), toggleMenu)
+
+CloseBtn.MouseButton1Click:Connect(toggleMenu)
+
+local dragging = false
+local dragStart, startPos
+
+TitleBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = MenuFrame.Position
+    end
+end)
+
+UIS.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
+
+UIS.InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - dragStart
+        menuPos = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        MenuFrame.Position = menuPos
+    end
+end)
+
+UIS.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.Insert then
+        if authenticated then
+            toggleMenu()
+        end
+    end
+end)
+
+local function showNotify(msg, isError)
+    local notif = Instance.new("Frame")
+    notif.Size = UDim2.new(0, 280, 0, 45)
+    notif.Position = UDim2.new(0.5, -140, 0, 60)
+    notif.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+    notif.BackgroundTransparency = 0.05
+    notif.BorderSizePixel = 0
+    notif.Parent = ScreenGui
+    
+    local notifCorner = Instance.new("UICorner")
+    notifCorner.CornerRadius = UDim.new(0, 10)
+    notifCorner.Parent = notif
+    
+    local notifStroke = Instance.new("UIStroke")
+    notifStroke.Color = isError and Color3.fromRGB(255, 80, 80) or Color3.fromRGB(80, 255, 120)
+    notifStroke.Thickness = 1
+    notifStroke.Parent = notif
+    
+    local text = Instance.new("TextLabel", notif)
+    text.Size = UDim2.new(1, -20, 1, 0)
+    text.Position = UDim2.new(0, 10, 0, 0)
+    text.BackgroundTransparency = 1
+    text.Text = msg
+    text.TextColor3 = Color3.fromRGB(255, 255, 255)
+    text.TextSize = 12
+    text.Font = Enum.Font.Gotham
+    
+    TweenService:Create(notif, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {Position = UDim2.new(0.5, -140, 0, 20)}):Play()
+    task.wait(2.5)
+    TweenService:Create(notif, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {Position = UDim2.new(0.5, -140, 0, -60)}):Play()
+    task.wait(0.3)
+    notif:Destroy()
+end
+
+local function activate()
+    authenticated = true
+    LangFrame.Visible = false
+    KeyFrame.Visible = false
+    MenuFrame.Visible = true
+    
+    local playerName = Player.Name
+    if language == "VN" then
+        showNotify("✅ KEY ĐÚNG! CHÚC " .. playerName:upper() .. " CHƠI GAME VUI VẺ!")
+    else
+        showNotify("✅ KEY CORRECT! WISH " .. playerName:upper() .. " HAVE FUN!")
+    end
+    
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= Player then
+            MakeFarESP(p)
+        end
+    end
+    
+    Players.PlayerAdded:Connect(function(p)
+        if p ~= Player and espEnabled then
+            MakeFarESP(p)
+        end
+    end)
+end
+
+VNBtn.MouseButton1Click:Connect(function()
+    language = "VN"
+    VNBtn.BackgroundColor3 = Color3.fromRGB(255, 80, 120)
+    ENBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
+    updateLanguage()
+    LangFrame.Visible = false
+    KeyFrame.Visible = true
+    if language == "VN" then
+        KeyBox.PlaceholderText = "NHẬP KEY..."
+        SubmitBtn.Text = "KÍCH HOẠT"
+        KeyTitle.Text = "🔐 XÁC THỰC"
+        KeySub.Text = "NHẬP KEY ĐỂ KÍCH HOẠT"
+    end
+end)
+
+ENBtn.MouseButton1Click:Connect(function()
+    language = "EN"
+    ENBtn.BackgroundColor3 = Color3.fromRGB(255, 80, 120)
+    VNBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
+    updateLanguage()
+    LangFrame.Visible = false
+    KeyFrame.Visible = true
+    if language == "EN" then
+        KeyBox.PlaceholderText = "ENTER KEY..."
+        SubmitBtn.Text = "ACTIVATE"
+        KeyTitle.Text = "🔐 AUTHENTICATION"
+        KeySub.Text = "ENTER KEY TO ACTIVATE"
+    end
+end)
+
+SubmitBtn.MouseButton1Click:Connect(function()
+    if KeyBox.Text == KEY then
+        activate()
+    else
+        if language == "VN" then
+            ErrorMsg.Text = "KEY KHÔNG HỢP LỆ!"
+        else
+            ErrorMsg.Text = "INVALID KEY!"
+        end
+        ErrorMsg.Visible = true
+        KeyBox.Text = ""
+        task.wait(2)
+        ErrorMsg.Visible = false
+    end
+end)
+
+KeyBox.FocusLost:Connect(function(enterPressed)
+    if enterPressed and KeyBox.Text == KEY then
+        activate()
+    elseif enterPressed then
+        if language == "VN" then
+            ErrorMsg.Text = "KEY KHÔNG HỢP LỆ!"
+        else
+            ErrorMsg.Text = "INVALID KEY!"
+        end
+        ErrorMsg.Visible = true
+        KeyBox.Text = ""
+        task.wait(2)
+        ErrorMsg.Visible = false
+    end
+end)
